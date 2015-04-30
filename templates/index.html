@@ -1,0 +1,215 @@
+{% load accounting_tags %}
+
+<html>
+<head>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	<script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+	<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+<style>
+* {
+ font-size: 10px;
+}
+
+.positive {
+	color: green;
+}
+
+.negative {
+	color: red
+}
+
+.unknown {
+	background-color: yellow;
+}
+</style>
+
+</head>
+
+  <!-- Nav tabs -->
+  <ul class="nav nav-tabs" role="tablist">
+    <li><a  id="home" href="{% url 'index' %}">[H]</a></li>
+    <li role="presentation" class="active"><a href="#transactions" aria-controls="transactions" role="tab" data-toggle="tab">Transactions</a></li>
+    <li role="presentation"><a href="#totals" aria-controls="totals" role="tab" data-toggle="tab">Monthly Totals</a></li>
+    <li role="presentation"><a href="#balances" aria-controls="balances" role="tab" data-toggle="tab">Balances</a></li>
+    <li role="presentation"><a href="#investments" aria-controls="investments" role="tab" data-toggle="tab">Investments</a></li>
+    <li role="presentation"><a href="#accounts" aria-controls="accounts" role="tab" data-toggle="tab">Accounts</a></li>
+  </ul>
+  
+<div class="tab-content">
+	<div role="tabpanel" class="tab-pane active" id="transactions">
+		<pre>{{ title }}
+		<table class="table table-bordered table-condensed">
+		  <tr><th>Posted</th><th>Account</th><th>Details</th><th>Description</th><th>Category</th><th>Check #</th><th>Amount</th></tr>
+		  {% for transaction in transactions %}
+		  	<tr {% if transaction.entity.category.name == 'Unknown' %}class="unknown"{% endif %}>
+		  		<td>{{ transaction.posted }}</td>
+		  		<td>
+		  			<a href="{% url 'index' %}?account_id={{ transaction.account.id }}">
+		  				{{ transaction.account.name }}
+	  				</a>
+	  			</td>
+	  			
+		  		<td>{{ transaction.display_txt|truncatechars:60 }}</td>
+		  		
+		  		<td>
+		  			<a href="{% url 'index' %}?entity_id={{ transaction.entity.id }}">
+		  				{{ transaction.entity.description }}
+	  				</a>
+  				</td>
+  				
+		  		{% if transaction.entity.category.name == 'Unknown' %}
+		  			<td>
+		  				<a href="/admin/accounting/entity/{{ transaction.entity.id }}/">
+		  					{{ transaction.entity.category }}
+	  					</a>
+  					</td>
+		  		{% else %}
+		  			<td>
+		  				<a href="{% url 'index' %}?category_id={{ transaction.entity.category.id }}">
+		  					{{ transaction.entity.category }}
+	  					</a>
+  					</td>
+		  		{% endif %}
+		  		
+		  		<td>{{ transaction.check_num|default:'' }}</td>
+		  		
+		  		<td>
+		  			{% with transaction.amount as amount %}
+		  				<a class="{% if amount and amount > 0.0 %}positive{% elif amount and amount < 0.0 %}negative{% endif %}"
+		  					target="_blank" href="http://localhost:8000/admin/accounting/transaction/{{ transaction.id }}/">
+								{{ amount|currency }}						
+	  					</a>
+	  				{% endwith %}
+  				</td>
+		  	</tr>
+		
+		  {% endfor %}
+		  <tr>
+		  	<td>Total</td>
+		  	<td></td>
+		  	<td></td>
+		  	<td></td>
+		  	<td></td>
+		  	<td></td>
+		  	<td><b>{{ total|currency }}</b></td>
+		  </tr>
+		</table>
+		</pre>
+	</div>
+	
+	<div role="tabpanel" class="tab-pane" id="totals">
+		
+		
+		<pre>{{ title }}
+			<table class="table table-bordered table-condensed">
+				<tr><th></th>
+					{% for col in totals.cols %}
+						<th><span style="float:right">{{ col }}</span></th>
+					{% endfor %}
+				</tr>
+				{% for row in totals.rows %}
+					<tr><td>{{ row.heading }}</td>
+					{% for col in totals.cols %} 
+						{% cell totals col row as c %} 
+							
+						<td>
+							<span class="small {{ c.col_class }}" style="float:left">{% if c.col_change %} {{ c.col_change|currency }}{% endif %}</span>
+							<span class="{{ c.cell_class }}" style="float:right">{{ c.amount|currency }}</span>
+						</td>
+					{% endfor %}
+					</tr>
+				{% endfor %}
+				<tr><th>Total</th>
+				{% for col in totals.cols %}
+					{% col_total totals col as c %}
+					
+					<th>
+						<span class="small {{ c.col_class }}" style="float:left">{% if c.col_change %} {{ c.col_change|currency }}{% endif %}</span>
+						<span class="{{ c.cell_class }}" style="float:right">{{ c.amount|currency }}</span>
+					</th>
+				{% endfor %}
+				</tr>
+			</table>
+		</pre>
+	</div>
+	
+	<div role="tabpanel" class="tab-pane" id="balances">
+    	<pre>
+    	<table class="table table-bordered table-condensed">
+    		<tr><th></th>
+    		{% for date in balance_dates %}
+    			<th>{{ date }}</th>
+    		{% endfor %}
+    		{% for account in accounts %}
+    			{% if account.designation == 0 %}
+	    			<tr><td>{{ account }}</td>
+	    			{% for date in balance_dates %}
+	    				{% with balance_amounts|lookup:date|lookup:account as amount %}
+	    					<td class="{% if amount and amount > 0.0 %}positive{% elif amount and amount < 0.0 %}negative{% endif %}">{{ amount|currency }}</td>
+	    				{% endwith %}
+	    			{% endfor %}
+	    		{% endif %}
+    		{% endfor %}
+    		<tr>
+	    		{% for date in balance_dates %}
+	    			<td></td>
+	    		{% endfor %}
+    		</tr>
+    		{% for account in accounts %}
+    			{% if account.designation == 1 %}
+	    			<tr><td>{{ account }}</td>
+	    			{% for date in balance_dates %}
+	    				{% with balance_amounts|lookup:date|lookup:account as amount %}
+	    					<td class="{% if amount and amount > 0.0 %}positive{% elif amount and amount < 0.0 %}negative{% endif %}">{{ amount|currency }}</td>
+	    				{% endwith %}
+	    			{% endfor %}
+	    		{% endif %}
+    		{% endfor %}
+    		</tr>
+    		
+    		<tr><td>Total</td>
+    		{% for date in balance_dates %}
+    			<td>{{ balance_totals|lookup:date|currency }}</td>
+    		{% endfor %}
+    		
+    		</tr>
+    	</table>
+    	
+		</pre>
+	</div>
+	
+	
+    <div role="tabpanel" class="tab-pane" id="investments">...</div>
+    
+    <div role="tabpanel" class="tab-pane" id="accounts">
+    	<a href="{% url 'refresh-all' %}" class="btn btn-primary">Refresh</a>
+    	<pre>
+		<table class="table table-bordered table-condensed">
+		  <tr><th>Institute</th><th>Account</th><th>Username</th><th>Password</th><th>Last Update</th><th>Connected?</th></tr>
+		  {% for account in accounts %}
+		  	<tr>
+		  		<td>{{ account.institute }}</td>
+		  		<td><a href="{{ account.login_url }}" target="_blank">{{ account.name }}</a></td>
+		  		<td>{{ account.username }}</td>
+		  		<td>{{ account.password }}</td>
+		  		<td>{{ account.last_update }}</td>
+		  		<td>{% if account.provider != None %}<a href="{% url 'update' account.id %}">update</a>{% endif %}</td>
+		  	</tr>
+		  {% endfor %}
+		</table>
+		</pre>
+    </div>
+</div>
+
+<script>
+	$('.nav-tabs a').click(function (e) {
+		if ($(this).attr('id') != 'home') {
+	  		e.preventDefault()
+	  		$(this).tab('show')
+		}
+	})
+</script>
+</body>
+</html>

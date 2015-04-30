@@ -1,0 +1,6 @@
+yolk
+Django==1.7.5
+MySQL-python
+selenium
+ofxparse
+lxml
