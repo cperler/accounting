@@ -1,3 +1,5 @@
+import datetime
+
 from selenium.webdriver.common.by import By
 
 from accounting.providers import OfxProvider, wait_for, wait_for_file
@@ -16,4 +18,8 @@ class CapitalOne(OfxProvider):
         self.driver.get('https://services2.capitalone.com/accounts/transactions/export')
         
         wait_for(self.driver, By.LINK_TEXT, "Pending transactions")
-        return wait_for_file(self.dl_path, lambda:self.driver.get(account.download_url))
+        today = datetime.datetime.today()
+        end_date = datetime.datetime.strftime(today, '%Y-%m-%d')
+        download_url = 'https://servicing.capitalone.com/c1/accounts/download.ashx?index=1&from=2015-01-01&to={}&type=ofx'.format(end_date) 
+        
+        return wait_for_file(self.dl_path, lambda:self.driver.get(download_url))
