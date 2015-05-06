@@ -3,6 +3,7 @@ import datetime
 from decimal import Decimal
 
 from django.core import cache
+from django.db.models.query_utils import Q
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -83,13 +84,16 @@ def _get(request, catfn=lambda tx:tx.entity.category):
     account_id = None
     entity_id = None
     category_id = None
+    amount_filter = 0.00
     
     if request.GET:
         account_id = request.GET.get('account_id', None)
         entity_id = request.GET.get('entity_id', None)
         category_id = request.GET.get('category_id', None)
+        amount_filter = float(request.GET.get('amount', amount_filter))
+        
     
-    transactions = Transaction.objects.filter(posted__gte=first_of_year)
+    transactions = Transaction.objects.filter(posted__gte=first_of_year).filter(Q(amount__gte=amount_filter) | Q(amount__lte=(amount_filter*-1.0)))
     if account_id:
         title = 'Account = {}'.format(Account.objects.get(id=account_id).heading)
         transactions = transactions.filter(account__id=account_id)
