@@ -6,7 +6,7 @@ Well, I'm an engineer, so what the hell man?  I can build a tool that automates 
 
 This project is not meant for production use.  It's meant for running locally for your own purposes.  There's no encryption around account passwords.  I've only tested the available providers with Chrome, so that needs to be available in the local environment.
 
-The way this works is that you create Accounts.  In order to automatically download and process transactions, an Account requires a username and password, and a reference to a provider, which does the actual work of donwloading and processing.  Some providers require a bit more information, such as a download URL or a "site key" which is usually the account name as it's listed on the financial firm's page.  See each provider for more information.
+The way this works is that you create Accounts.  In order to automatically download and process transactions, an Account requires a username and password, and a reference to a provider, which does the actual work of downloading and processing.  Some providers require a bit more information, such as a download URL or a "site key" which is usually the account name as it's listed on the financial firm's page.  See each provider for more information.
 
 As an example:
 
