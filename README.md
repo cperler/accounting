@@ -16,7 +16,7 @@ from accounting.providers.chase import *
 a = Account.objects.get(name='Chase-Savings')
 c = Chase()
 c.retrieve(a)
-# wait a bit while Chase donwloads all transactions and the current balance for the Chase-Savings account
+# wait a bit while Chase downloads all transactions and the current balance for the Chase-Savings account
 # Output: c.retrieve(a)
 
 c.process()
